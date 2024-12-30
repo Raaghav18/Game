@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Python Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+        }
+        canvas {
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="color: white;">My Python Game</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const context = canvas.getContext("2d");
+
+        class Shooter {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.angle = 90;
+            }
+
+            draw() {
+                context.fillStyle = "green";
+                context.fillRect(this.x, this.y, 50, 10);
+            }
+
+            updateAngle(newAngle) {
+                this.angle = Math.max(0, Math.min(newAngle, 180));
+            }
+        }
+
+        class FallingObject {
+            constructor(x, y, speed, color) {
+                this.x = x;
+                this.y = y;
+                this.speed = speed;
+                this.color = color;
+            }
+
+            draw() {
+                context.fillStyle = this.color;
+                context.beginPath();
+                context.arc(this.x, this.y, 10, 0, 2 * Math.PI);
+                context.fill();
+            }
+
+            updatePosition() {
+                this.y += this.speed;
+            }
+        }
+
+        class Projectile {
+            constructor(x, y, angle) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.speed = 10;
+            }
+
+            draw() {
+                context.fillStyle = "blue";
+                context.beginPath();
+                context.arc(this.x, this.y, 8, 0, 2 * Math.PI);
+                context.fill();
+            }
+
+            updatePosition() {
+                this.x += this.speed * Math.cos(this.angle * Math.PI / 180);
+                this.y -= this.speed * Math.sin(this.angle * Math.PI / 180);
+            }
+        }
+
+        let shooter = new Shooter(375, 550);
+        let fallingObjects = [];
+        let projectiles = [];
+        let score = 0;
+        let lives = 3;
+
+        function gameLoop() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            shooter.draw();
+
+            fallingObjects.forEach((obj, index) => {
+                obj.updatePosition();
+                obj.draw();
+                if (obj.y > 600) {
+                    fallingObjects.splice(index, 1);
+                    lives -= 1;
+                }
+            });
+
+            projectiles.forEach((proj, projIndex) => {
+                proj.updatePosition();
+                proj.draw();
+                fallingObjects.forEach((obj, objIndex) => {
+                    if (Math.hypot(proj.x - obj.x, proj.y - obj.y) < 15) {
+                        projectiles.splice(projIndex, 1);
+                        fallingObjects.splice(objIndex, 1);
+                        score += 10;
+                    }
+                });
+            });
+
+            context.fillStyle = "white";
+            context.fillText(`Score: ${score}`, 10, 20);
+            context.fillText(`Lives: ${lives}`, 700, 20);
+
+            if (lives > 0) {
+                requestAnimationFrame(gameLoop);
+            } else {
+                context.fillText("Game Over", 350, 300);
+            }
+        }
+
+        function spawnFallingObject() {
+            let x = Math.random() * 800;
+            fallingObjects.push(new FallingObject(x, 0, 1, "red"));
+        }
+
+        setInterval(spawnFallingObject, 4000);
+        gameLoop();
+    </script>
+</body>
+</html>
